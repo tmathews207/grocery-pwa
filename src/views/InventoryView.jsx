@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
+import Stepper from '../components/Stepper'
 
 export default function InventoryView() {
   const { state, dispatch } = useApp()
@@ -8,12 +9,7 @@ export default function InventoryView() {
   const toggle = id => setCollapsed(c => ({ ...c, [id]: !c[id] }))
 
   function hasShortfallForLI(item, li) {
-    const allLIs = state.locationItems.filter(x => x.itemId === item.id)
-    const total = allLIs.reduce((s, x) => s + (Number(x.onHand) || 0), 0)
-    return (
-      total < (Number(item.globalRequired) || 0) ||
-      (Number(li.onHand) || 0) < (Number(li.locationRequired) || 0)
-    )
+    return (Number(li.onHand) || 0) < (Number(li.locationRequired) || 0)
   }
 
   if (state.locations.length === 0) {
@@ -64,29 +60,32 @@ export default function InventoryView() {
                               {item.unit && <span className="item-unit"> {item.unit}</span>}
                             </td>
                             <td className="col-qty">
-                              <input
-                                type="number"
-                                min="0"
-                                step="1"
+                              <Stepper
                                 value={li.onHand ?? 0}
-                                onChange={e =>
+                                compact
+                                onChange={v =>
                                   dispatch({
                                     type: 'UPDATE_LOCATION_ITEM',
                                     locationId: loc.id,
                                     itemId: item.id,
-                                    updates: { onHand: Number(e.target.value) },
+                                    updates: { onHand: v },
                                   })
                                 }
-                                className="qty-input"
                               />
                             </td>
-                            <td className="col-qty req-val">
-                              {li.locationRequired || 0}
-                              {item.globalRequired > 0 && (
-                                <span className="global-req" title={`Global required: ${item.globalRequired}`}>
-                                  /{item.globalRequired}
-                                </span>
-                              )}
+                            <td className="col-qty">
+                              <Stepper
+                                value={li.locationRequired ?? 0}
+                                compact
+                                onChange={v =>
+                                  dispatch({
+                                    type: 'UPDATE_LOCATION_ITEM',
+                                    locationId: loc.id,
+                                    itemId: item.id,
+                                    updates: { locationRequired: v },
+                                  })
+                                }
+                              />
                             </td>
                           </tr>
                         )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
+import Stepper from '../components/Stepper'
 
 function ItemPickerSheet({ locationId, onClose }) {
   const { state, dispatch } = useApp()
@@ -99,32 +100,30 @@ function LocationCard({ loc }) {
               </div>
               <div className="qty-col">
                 <span className="qty-label">On Hand</span>
-                <input
-                  type="number"
-                  min="0"
+                <Stepper
                   value={li.onHand ?? 0}
-                  onChange={e =>
+                  compact
+                  onChange={v =>
                     dispatch({
                       type: 'UPDATE_LOCATION_ITEM',
                       locationId: loc.id,
                       itemId: item.id,
-                      updates: { onHand: Number(e.target.value) },
+                      updates: { onHand: v },
                     })
                   }
                 />
               </div>
               <div className="qty-col">
                 <span className="qty-label">Req&apos;d</span>
-                <input
-                  type="number"
-                  min="0"
+                <Stepper
                   value={li.locationRequired ?? 0}
-                  onChange={e =>
+                  compact
+                  onChange={v =>
                     dispatch({
                       type: 'UPDATE_LOCATION_ITEM',
                       locationId: loc.id,
                       itemId: item.id,
-                      updates: { locationRequired: Number(e.target.value) },
+                      updates: { locationRequired: v },
                     })
                   }
                 />
@@ -193,7 +192,6 @@ function GlobalItemRow({ item }) {
   const { state, dispatch } = useApp()
   const [name, setName] = useState(item.name)
   const [unit, setUnit] = useState(item.unit)
-  const [globalRequired, setGlobalRequired] = useState(item.globalRequired)
 
   const locCount = state.locationItems.filter(li => li.itemId === item.id).length
 
@@ -204,7 +202,6 @@ function GlobalItemRow({ item }) {
       updates: {
         name: name.trim() || item.name,
         unit: unit.trim(),
-        globalRequired: Number(globalRequired) || 0,
       },
     })
   }
@@ -237,17 +234,6 @@ function GlobalItemRow({ item }) {
             onKeyDown={e => e.key === 'Enter' && e.target.blur()}
           />
         </div>
-        <div>
-          <div className="field-label">Global req&apos;d</div>
-          <input
-            type="number"
-            min="0"
-            value={globalRequired}
-            onChange={e => setGlobalRequired(e.target.value)}
-            onBlur={save}
-            onKeyDown={e => e.key === 'Enter' && e.target.blur()}
-          />
-        </div>
       </div>
       <div className="global-item-meta">
         <span className="loc-count">{locCount} loc{locCount !== 1 ? 's' : ''}</span>
@@ -263,15 +249,13 @@ function ItemsTab() {
   const { state, dispatch } = useApp()
   const [name, setName] = useState('')
   const [unit, setUnit] = useState('')
-  const [globalRequired, setGlobalRequired] = useState('')
 
   function addItem() {
     const trimmed = name.trim()
     if (!trimmed) return
-    dispatch({ type: 'ADD_ITEM', name: trimmed, unit: unit.trim(), globalRequired })
+    dispatch({ type: 'ADD_ITEM', name: trimmed, unit: unit.trim() })
     setName('')
     setUnit('')
-    setGlobalRequired('')
   }
 
   return (
@@ -286,17 +270,9 @@ function ItemsTab() {
             style={{ flex: 2 }}
           />
           <input
-            placeholder="Unit"
+            placeholder="Unit (oz, lbs...)"
             value={unit}
             onChange={e => setUnit(e.target.value)}
-            style={{ flex: 1 }}
-          />
-          <input
-            type="number"
-            placeholder="Global req"
-            value={globalRequired}
-            onChange={e => setGlobalRequired(e.target.value)}
-            min="0"
             style={{ flex: 1 }}
           />
         </div>
