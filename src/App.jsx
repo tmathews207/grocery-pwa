@@ -30,8 +30,20 @@ function IconCart() {
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('inventory')
-  const { getShoppingList } = useApp()
+  const { getShoppingList, loading } = useApp()
   const shoppingCount = getShoppingList().length
+
+  if (loading) {
+    return (
+      <div className="app">
+        <header className="app-header"><h1>Home Inventory</h1></header>
+        <main className="app-content loading-screen">
+          <div className="loading-spinner" />
+          <p>Syncing data&hellip;</p>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="app">

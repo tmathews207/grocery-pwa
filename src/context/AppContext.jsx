@@ -1,6 +1,6 @@
-import { createContext, useContext, useReducer, useEffect } from 'react'
-
-const STORAGE_KEY = 'grocery-pwa-v1'
+import { createContext, useContext, useReducer, useEffect, useRef, useState } from 'react'
+import { doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 
 function genId() {
   return crypto.randomUUID()
@@ -47,7 +47,6 @@ function reducer(state, action) {
           id: genId(),
           name: action.name,
           unit: action.unit || '',
-          globalRequired: Number(action.globalRequired) || 0,
           purchaseHistory: [],
         }],
       }
@@ -125,38 +124,65 @@ function reducer(state, action) {
 }
 
 const AppContext = createContext(null)
+const STATE_DOC = doc(db, 'inventory', 'state')
 
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, DEFAULT_STATE)
+  const [loading, setLoading] = useState(true)
+  const readyToWrite = useRef(false)
+  const skipNextWrite = useRef(false)
 
+  // Listen for changes from Firestore (real-time sync across devices)
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      try { dispatch({ type: 'HYDRATE', payload: JSON.parse(saved) }) } catch {}
-    }
+    const unsub = onSnapshot(
+      STATE_DOC,
+      snap => {
+        if (snap.exists()) {
+          skipNextWrite.current = true
+          dispatch({ type: 'HYDRATE', payload: snap.data() })
+        }
+        readyToWrite.current = true
+        setLoading(false)
+      },
+      err => {
+        console.error('Firestore sync error:', err)
+        readyToWrite.current = true
+        setLoading(false)
+      }
+    )
+    return unsub
   }, [])
 
+  // Save local changes to Firestore (debounced 800ms, skips echo from remote updates)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    if (!readyToWrite.current) return
+    if (skipNextWrite.current) {
+      skipNextWrite.current = false
+      return
+    }
+    const t = setTimeout(() => {
+      setDoc(STATE_DOC, state).catch(console.error)
+    }, 800)
+    return () => clearTimeout(t)
   }, [state])
 
   function getShoppingList() {
     return state.items
       .map(item => {
         const lis = state.locationItems.filter(li => li.itemId === item.id)
-        const totalOnHand = lis.reduce((s, li) => s + (Number(li.onHand) || 0), 0)
         const shortfall = lis.reduce(
           (s, li) => s + Math.max(0, (Number(li.locationRequired) || 0) - (Number(li.onHand) || 0)),
           0
         )
         if (shortfall === 0) return null
+        const totalOnHand = lis.reduce((s, li) => s + (Number(li.onHand) || 0), 0)
         return { item, shortfall, totalOnHand }
       })
       .filter(Boolean)
   }
 
   return (
-    <AppContext.Provider value={{ state, dispatch, getShoppingList }}>
+    <AppContext.Provider value={{ state, dispatch, getShoppingList, loading }}>
       {children}
     </AppContext.Provider>
   )
