@@ -152,9 +152,30 @@ function LocationCard({ loc }) {
   )
 }
 
+function StoreSectionChips({ sections, selectedId, onSelect }) {
+  return (
+    <div className="section-chip-row">
+      {sections.map(section => {
+        const active = section.id === selectedId
+        return (
+          <button
+            key={section.id}
+            className={`section-chip${active ? ' active' : ''}`}
+            type="button"
+            onClick={() => onSelect(active ? '' : section.id)}
+          >
+            {section.name}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function LocationsTab() {
   const { state, dispatch } = useApp()
   const [newName, setNewName] = useState('')
+  const [newSection, setNewSection] = useState('')
 
   function addLocation() {
     const trimmed = newName.trim()
@@ -163,8 +184,50 @@ function LocationsTab() {
     setNewName('')
   }
 
+  function addStoreSection() {
+    const trimmed = newSection.trim()
+    if (!trimmed) return
+    dispatch({ type: 'ADD_STORE_SECTION', name: trimmed })
+    setNewSection('')
+  }
+
   return (
     <div className="view">
+      <div className="section-card">
+        <div className="section-card-header">Store Sections</div>
+        <div className="add-form">
+          <div className="add-form-row">
+            <input
+              placeholder="New store section"
+              value={newSection}
+              onChange={e => setNewSection(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addStoreSection()}
+            />
+            <button className="btn-primary" onClick={addStoreSection} disabled={!newSection.trim()}>
+              Add
+            </button>
+          </div>
+          {state.storeSections.length === 0 ? (
+            <div className="empty-state">No store sections yet.</div>
+          ) : (
+            <div className="section-list">
+              {state.storeSections.map(section => (
+                <div key={section.id} className="section-list-row">
+                  <span>{section.name}</span>
+                  <button
+                    className="btn-icon danger"
+                    onClick={() => dispatch({ type: 'REMOVE_STORE_SECTION', id: section.id })}
+                    title="Delete section"
+                  >
+                    &#x2715;
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="add-form">
         <div className="add-form-row">
           <input
@@ -192,6 +255,7 @@ function GlobalItemRow({ item }) {
   const { state, dispatch } = useApp()
   const [name, setName] = useState(item.name)
   const [unit, setUnit] = useState(item.unit)
+  const [sectionId, setSectionId] = useState(item.storeSectionId || '')
 
   const locCount = state.locationItems.filter(li => li.itemId === item.id).length
 
@@ -202,6 +266,7 @@ function GlobalItemRow({ item }) {
       updates: {
         name: name.trim() || item.name,
         unit: unit.trim(),
+        storeSectionId: sectionId,
       },
     })
   }
@@ -235,6 +300,27 @@ function GlobalItemRow({ item }) {
           />
         </div>
       </div>
+      <div className="section-picker-wrap">
+        <div className="field-label">Store Section</div>
+        {state.storeSections.length === 0 ? (
+          <div className="empty-state" style={{ padding: '10px 0 0' }}>
+            Add store sections in the Locations tab first.
+          </div>
+        ) : (
+          <StoreSectionChips
+            sections={state.storeSections}
+            selectedId={sectionId}
+            onSelect={id => {
+              setSectionId(id)
+              dispatch({
+                type: 'UPDATE_ITEM',
+                id: item.id,
+                updates: { storeSectionId: id },
+              })
+            }}
+          />
+        )}
+      </div>
       <div className="global-item-meta">
         <span className="loc-count">{locCount} loc{locCount !== 1 ? 's' : ''}</span>
         <button className="btn-icon danger" onClick={removeItem} title="Delete item">
@@ -249,13 +335,15 @@ function ItemsTab() {
   const { state, dispatch } = useApp()
   const [name, setName] = useState('')
   const [unit, setUnit] = useState('')
+  const [sectionId, setSectionId] = useState('')
 
   function addItem() {
     const trimmed = name.trim()
     if (!trimmed) return
-    dispatch({ type: 'ADD_ITEM', name: trimmed, unit: unit.trim() })
+    dispatch({ type: 'ADD_ITEM', name: trimmed, unit: unit.trim(), storeSectionId: sectionId })
     setName('')
     setUnit('')
+    setSectionId('')
   }
 
   return (
@@ -275,6 +363,20 @@ function ItemsTab() {
             onChange={e => setUnit(e.target.value)}
             style={{ flex: 1 }}
           />
+        </div>
+        <div className="section-picker-wrap">
+          <div className="field-label">Store Section</div>
+          {state.storeSections.length === 0 ? (
+            <div className="empty-state" style={{ padding: '10px 0 0' }}>
+              Add store sections in the Locations tab first.
+            </div>
+          ) : (
+            <StoreSectionChips
+              sections={state.storeSections}
+              selectedId={sectionId}
+              onSelect={setSectionId}
+            />
+          )}
         </div>
         <button className="btn-primary" onClick={addItem} disabled={!name.trim()}>
           Add Item

@@ -15,6 +15,18 @@ const DEFAULT_STATE = {
     { id: 'loc-5', name: 'Master Shower' },
     { id: 'loc-6', name: 'Guest Bathroom' },
   ],
+  storeSections: [
+    { id: 'sec-1', name: 'Produce' },
+    { id: 'sec-2', name: 'Dairy' },
+    { id: 'sec-3', name: 'Meat' },
+    { id: 'sec-4', name: 'Bakery' },
+    { id: 'sec-5', name: 'Frozen' },
+    { id: 'sec-6', name: 'Canned Goods' },
+    { id: 'sec-7', name: 'Beverages' },
+    { id: 'sec-8', name: 'Snacks' },
+    { id: 'sec-9', name: 'Household' },
+    { id: 'sec-10', name: 'Personal Care' },
+  ],
   items: [],
   locationItems: [],
 }
@@ -22,7 +34,7 @@ const DEFAULT_STATE = {
 function reducer(state, action) {
   switch (action.type) {
     case 'HYDRATE':
-      return action.payload
+      return { ...DEFAULT_STATE, ...action.payload }
 
     case 'ADD_LOCATION':
       return { ...state, locations: [...state.locations, { id: genId(), name: action.name }] }
@@ -40,6 +52,21 @@ function reducer(state, action) {
         locationItems: state.locationItems.filter(li => li.locationId !== action.id),
       }
 
+    case 'ADD_STORE_SECTION':
+      return {
+        ...state,
+        storeSections: [...state.storeSections, { id: genId(), name: action.name }],
+      }
+
+    case 'REMOVE_STORE_SECTION':
+      return {
+        ...state,
+        storeSections: state.storeSections.filter(s => s.id !== action.id),
+        items: state.items.map(i =>
+          i.storeSectionId === action.id ? { ...i, storeSectionId: '' } : i
+        ),
+      }
+
     case 'ADD_ITEM':
       return {
         ...state,
@@ -47,6 +74,7 @@ function reducer(state, action) {
           id: genId(),
           name: action.name,
           unit: action.unit || '',
+          storeSectionId: action.storeSectionId || '',
           purchaseHistory: [],
         }],
       }

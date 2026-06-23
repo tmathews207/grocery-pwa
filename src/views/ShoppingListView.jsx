@@ -145,8 +145,20 @@ function ShoppingCard({ item, shortfall }) {
 }
 
 export default function ShoppingListView() {
-  const { getShoppingList } = useApp()
+  const { state, getShoppingList } = useApp()
   const list = getShoppingList()
+
+  const sections = state.storeSections || []
+  const groupedSections = sections
+    .map(section => ({
+      section,
+      items: list.filter(entry => entry.item.storeSectionId === section.id),
+    }))
+    .filter(group => group.items.length > 0)
+
+  const untagged = list.filter(
+    entry => !entry.item.storeSectionId || !sections.some(s => s.id === entry.item.storeSectionId)
+  )
 
   if (list.length === 0) {
     return (
@@ -163,9 +175,22 @@ export default function ShoppingListView() {
       <p className="section-count">
         {list.length} item{list.length !== 1 ? 's' : ''} needed
       </p>
-      {list.map(({ item, shortfall }) => (
-        <ShoppingCard key={item.id} item={item} shortfall={shortfall} />
+      {groupedSections.map(group => (
+        <div key={group.section.id} className="shopping-section">
+          <div className="shopping-section-header">{group.section.name}</div>
+          {group.items.map(({ item, shortfall }) => (
+            <ShoppingCard key={item.id} item={item} shortfall={shortfall} />
+          ))}
+        </div>
       ))}
+      {untagged.length > 0 && (
+        <div className="shopping-section">
+          <div className="shopping-section-header">Untagged</div>
+          {untagged.map(({ item, shortfall }) => (
+            <ShoppingCard key={item.id} item={item} shortfall={shortfall} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
