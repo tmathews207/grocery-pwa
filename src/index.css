@@ -706,27 +706,6 @@ html, body, #root {
   border-radius: 10px;
   background: #FAFAFA;
 }
-.section-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-.section-chip {
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--text);
-  padding: 8px 12px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
-}
-.section-chip.active {
-  background: var(--green-bg);
-  border-color: var(--green);
-  color: var(--green);
-}
 .section-picker-wrap {
   display: flex;
   flex-direction: column;

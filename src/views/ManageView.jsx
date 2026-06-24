@@ -152,26 +152,6 @@ function LocationCard({ loc }) {
   )
 }
 
-function StoreSectionChips({ sections, selectedId, onSelect }) {
-  return (
-    <div className="section-chip-row">
-      {sections.map(section => {
-        const active = section.id === selectedId
-        return (
-          <button
-            key={section.id}
-            className={`section-chip${active ? ' active' : ''}`}
-            type="button"
-            onClick={() => onSelect(active ? '' : section.id)}
-          >
-            {section.name}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 function LocationsTab() {
   const { state, dispatch } = useApp()
   const [newName, setNewName] = useState('')
@@ -301,16 +281,19 @@ function GlobalItemRow({ item }) {
         </div>
       </div>
       <div className="section-picker-wrap">
-        <div className="field-label">Store Section</div>
+        <label className="field-label" htmlFor={`section-${item.id}`}>
+          Store Section
+        </label>
         {state.storeSections.length === 0 ? (
           <div className="empty-state" style={{ padding: '10px 0 0' }}>
             Add store sections in the Locations tab first.
           </div>
         ) : (
-          <StoreSectionChips
-            sections={state.storeSections}
-            selectedId={sectionId}
-            onSelect={id => {
+          <select
+            id={`section-${item.id}`}
+            value={sectionId}
+            onChange={e => {
+              const id = e.target.value
               setSectionId(id)
               dispatch({
                 type: 'UPDATE_ITEM',
@@ -318,7 +301,14 @@ function GlobalItemRow({ item }) {
                 updates: { storeSectionId: id },
               })
             }}
-          />
+          >
+            <option value="">None</option>
+            {state.storeSections.map(section => (
+              <option key={section.id} value={section.id}>
+                {section.name}
+              </option>
+            ))}
+          </select>
         )}
       </div>
       <div className="global-item-meta">
@@ -365,17 +355,26 @@ function ItemsTab() {
           />
         </div>
         <div className="section-picker-wrap">
-          <div className="field-label">Store Section</div>
+          <label className="field-label" htmlFor="new-item-section">
+            Store Section
+          </label>
           {state.storeSections.length === 0 ? (
             <div className="empty-state" style={{ padding: '10px 0 0' }}>
               Add store sections in the Locations tab first.
             </div>
           ) : (
-            <StoreSectionChips
-              sections={state.storeSections}
-              selectedId={sectionId}
-              onSelect={setSectionId}
-            />
+            <select
+              id="new-item-section"
+              value={sectionId}
+              onChange={e => setSectionId(e.target.value)}
+            >
+              <option value="">None</option>
+              {state.storeSections.map(section => (
+                <option key={section.id} value={section.id}>
+                  {section.name}
+                </option>
+              ))}
+            </select>
           )}
         </div>
         <button className="btn-primary" onClick={addItem} disabled={!name.trim()}>
