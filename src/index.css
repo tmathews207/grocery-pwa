@@ -42,12 +42,14 @@ html, body, #root {
 
 /* ── Header ── */
 .app-header {
-  height: var(--header-h);
+  height: calc(var(--header-h) + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
   background: var(--green);
   color: #fff;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding-left: 16px;
+  padding-right: 16px;
   flex-shrink: 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
@@ -67,7 +69,7 @@ html, body, #root {
 
 /* ── Bottom Nav ── */
 .bottom-nav {
-  height: var(--nav-h);
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0));
   background: var(--card);
   border-top: 1px solid var(--border);
   display: flex;
