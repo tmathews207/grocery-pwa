@@ -32,6 +32,7 @@ function PurchaseEntry({ entry, itemId }) {
 
 function ShoppingCard({ item, shortfall }) {
   const { dispatch } = useApp()
+  const [status, setStatus] = useState(null) // null | 'unavailable' | 'elsewhere' | 'in-cart'
   const [expanded, setExpanded] = useState(false)
   const [adding, setAdding] = useState(false)
   const [store, setStore] = useState('')
@@ -60,8 +61,19 @@ function ShoppingCard({ item, shortfall }) {
     setAdding(false)
   }
 
+  const cardClass = [
+    'shopping-card',
+    status === 'unavailable' ? 'shopping-card--unavailable' : '',
+    status === 'elsewhere' ? 'shopping-card--elsewhere' : '',
+    status === 'in-cart' ? 'shopping-card--in-cart' : '',
+  ].filter(Boolean).join(' ')
+
+  function handleStatus(val) {
+    setStatus(prev => prev === val ? null : val)
+  }
+
   return (
-    <div className="shopping-card">
+    <div className={cardClass}>
       <button className="shopping-card-header" onClick={() => setExpanded(e => !e)}>
         <div className="shopping-card-main">
           <span className="shopping-item-name">{item.name}</span>
@@ -77,6 +89,24 @@ function ShoppingCard({ item, shortfall }) {
         </span>
         <span className="chevron">{expanded ? '▼' : '▶'}</span>
       </button>
+      <div className="shopping-card-status" onClick={e => e.stopPropagation()}>
+        {[
+          { value: 'unavailable', label: 'Not available' },
+          { value: 'elsewhere', label: 'Buy elsewhere' },
+          { value: 'in-cart', label: 'In cart' },
+        ].map(({ value, label }) => (
+          <label key={value} className={`status-option status-option--${value}${status === value ? ' active' : ''}`}>
+            <input
+              type="radio"
+              name={`status-${item.id}`}
+              value={value}
+              checked={status === value}
+              onChange={() => handleStatus(value)}
+            />
+            {label}
+          </label>
+        ))}
+      </div>
 
       {expanded && (
         <div className="ph-section">

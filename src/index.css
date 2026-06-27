@@ -538,6 +538,52 @@ html, body, #root {
 .shopping-item-qty { font-size: 0.82rem; color: var(--red); }
 .shopping-item-qty strong { font-weight: 700; }
 .shopping-item-unit { color: var(--text-secondary); font-weight: 400; }
+
+/* Shopping card status row */
+.shopping-card-status {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+.status-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+.status-option:last-child { border-right: none; }
+.status-option input[type="radio"] { display: none; }
+.status-option.active.status-option--unavailable {
+  background: #f0f0f0;
+  color: #999;
+}
+.status-option.active.status-option--elsewhere {
+  background: #1a1a1a;
+  color: #fff;
+}
+.status-option.active.status-option--in-cart {
+  background: var(--green, #2e7d32);
+  color: #fff;
+}
+
+/* State modifiers on the card */
+.shopping-card--unavailable { opacity: 0.45; }
+.shopping-card--elsewhere .shopping-item-name,
+.shopping-card--elsewhere .shopping-item-qty,
+.shopping-card--elsewhere .shopping-item-unit,
+.shopping-card--elsewhere .ph-count,
+.shopping-card--elsewhere .chevron {
+  color: #000 !important;
+}
+.shopping-card--in-cart .shopping-item-name { text-decoration: line-through; }
 .ph-count { font-size: 0.72rem; color: var(--text-secondary); white-space: nowrap; }
 
 .ph-section {

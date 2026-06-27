@@ -198,12 +198,10 @@ export function AppProvider({ children }) {
     return state.items
       .map(item => {
         const lis = state.locationItems.filter(li => li.itemId === item.id)
-        const shortfall = lis.reduce(
-          (s, li) => s + Math.max(0, (Number(li.locationRequired) || 0) - (Number(li.onHand) || 0)),
-          0
-        )
-        if (shortfall === 0) return null
+        const totalRequired = lis.reduce((s, li) => s + (Number(li.locationRequired) || 0), 0)
         const totalOnHand = lis.reduce((s, li) => s + (Number(li.onHand) || 0), 0)
+        const shortfall = Math.max(0, totalRequired - totalOnHand)
+        if (shortfall === 0) return null
         return { item, shortfall, totalOnHand }
       })
       .filter(Boolean)
