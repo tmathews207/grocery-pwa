@@ -676,6 +676,38 @@ html, body, #root {
   padding: 0 2px;
 }
 
+/* ── Prices toolbar & sort toggle ── */
+.prices-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px;
+}
+.sort-toggle {
+  display: flex;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sort-toggle button {
+  padding: 5px 11px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.sort-toggle button + button { border-left: 1px solid var(--border); }
+.sort-toggle button.active {
+  background: var(--green);
+  color: #fff;
+}
+
 /* ── Stepper ── */
 .stepper {
   display: inline-flex;

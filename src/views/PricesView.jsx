@@ -30,7 +30,7 @@ function PurchaseEntry({ entry, itemId }) {
   )
 }
 
-function ShoppingCard({ item, shortfall, status, onStatusChange }) {
+function PriceCard({ item }) {
   const { dispatch } = useApp()
   const [expanded, setExpanded] = useState(false)
   const [adding, setAdding] = useState(false)
@@ -60,26 +60,16 @@ function ShoppingCard({ item, shortfall, status, onStatusChange }) {
     setAdding(false)
   }
 
-  const cardClass = [
-    'shopping-card',
-    status === 'unavailable' ? 'shopping-card--unavailable' : '',
-    status === 'elsewhere' ? 'shopping-card--elsewhere' : '',
-    status === 'in-cart' ? 'shopping-card--in-cart' : '',
-  ].filter(Boolean).join(' ')
-
-  function handleStatus(val) {
-    onStatusChange(status === val ? null : val)
-  }
-
   return (
-    <div className={cardClass}>
+    <div className="shopping-card">
       <button className="shopping-card-header" onClick={() => setExpanded(e => !e)}>
         <div className="shopping-card-main">
           <span className="shopping-item-name">{item.name}</span>
-          <div className="shopping-item-qty">
-            Need <strong>{shortfall}</strong>
-            {item.unit && <span className="shopping-item-unit"> {item.unit}</span>}
-          </div>
+          {item.unit && (
+            <div className="shopping-item-qty" style={{ color: 'var(--text-secondary)' }}>
+              {item.unit}
+            </div>
+          )}
         </div>
         <span className="ph-count">
           {history.length > 0
@@ -88,24 +78,6 @@ function ShoppingCard({ item, shortfall, status, onStatusChange }) {
         </span>
         <span className="chevron">{expanded ? '▼' : '▶'}</span>
       </button>
-      <div className="shopping-card-status" onClick={e => e.stopPropagation()}>
-        {[
-          { value: 'unavailable', label: 'Not available' },
-          { value: 'elsewhere', label: 'Buy elsewhere' },
-          { value: 'in-cart', label: 'In cart' },
-        ].map(({ value, label }) => (
-          <label key={value} className={`status-option status-option--${value}${status === value ? ' active' : ''}`}>
-            <input
-              type="radio"
-              name={`status-${item.id}`}
-              value={value}
-              checked={status === value}
-              onChange={() => handleStatus(value)}
-            />
-            {label}
-          </label>
-        ))}
-      </div>
 
       {expanded && (
         <div className="ph-section">
@@ -173,82 +145,76 @@ function ShoppingCard({ item, shortfall, status, onStatusChange }) {
   )
 }
 
-export default function ShoppingListView({ itemStatuses, setItemStatuses }) {
-  const { state, getShoppingList } = useApp()
-  const list = getShoppingList()
+export default function PricesView() {
+  const { state } = useApp()
+  const [sortMode, setSortMode] = useState('alpha')
 
+  const items = state.items || []
   const sections = state.storeSections || []
-  const groupedSections = sections
-    .map(section => ({
-      section,
-      items: list.filter(entry => entry.item.storeSectionId === section.id),
-    }))
-    .filter(group => group.items.length > 0)
 
-  const untagged = list.filter(
-    entry => !entry.item.storeSectionId || !sections.some(s => s.id === entry.item.storeSectionId)
-  )
-
-  function handleStatusChange(itemId, val) {
-    setItemStatuses(prev => ({ ...prev, [itemId]: val }))
-  }
-
-  function clearStatuses() {
-    setItemStatuses({})
-  }
-
-  const hasAnyStatus = Object.values(itemStatuses).some(Boolean)
-
-  if (list.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="shopping-empty">
-        <div className="check-icon">&#x2713;</div>
-        <h2>All stocked up!</h2>
-        <p>No items below their required quantities.</p>
+        <h2>No items yet</h2>
+        <p>Add items in the Manage tab to track prices.</p>
       </div>
+    )
+  }
+
+  let content
+  if (sortMode === 'alpha') {
+    const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name))
+    content = sorted.map(item => <PriceCard key={item.id} item={item} />)
+  } else {
+    const grouped = sections
+      .map(section => ({
+        section,
+        items: items.filter(item => item.storeSectionId === section.id),
+      }))
+      .filter(g => g.items.length > 0)
+    const untagged = items.filter(
+      item => !item.storeSectionId || !sections.some(s => s.id === item.storeSectionId)
+    )
+    content = (
+      <>
+        {grouped.map(group => (
+          <div key={group.section.id} className="shopping-section">
+            <div className="shopping-section-header">{group.section.name}</div>
+            {group.items.map(item => <PriceCard key={item.id} item={item} />)}
+          </div>
+        ))}
+        {untagged.length > 0 && (
+          <div className="shopping-section">
+            <div className="shopping-section-header">Untagged</div>
+            {untagged.map(item => <PriceCard key={item.id} item={item} />)}
+          </div>
+        )}
+      </>
     )
   }
 
   return (
     <div className="view">
       <div className="prices-toolbar">
-        <p className="section-count">
-          {list.length} item{list.length !== 1 ? 's' : ''} needed
-        </p>
-        {hasAnyStatus && (
-          <button className="btn-ghost btn-sm" onClick={clearStatuses}>
-            Clear
+        <span className="section-count">
+          {items.length} item{items.length !== 1 ? 's' : ''}
+        </span>
+        <div className="sort-toggle">
+          <button
+            className={sortMode === 'alpha' ? 'active' : ''}
+            onClick={() => setSortMode('alpha')}
+          >
+            A–Z
           </button>
-        )}
+          <button
+            className={sortMode === 'section' ? 'active' : ''}
+            onClick={() => setSortMode('section')}
+          >
+            By Section
+          </button>
+        </div>
       </div>
-      {groupedSections.map(group => (
-        <div key={group.section.id} className="shopping-section">
-          <div className="shopping-section-header">{group.section.name}</div>
-          {group.items.map(({ item, shortfall }) => (
-            <ShoppingCard
-              key={item.id}
-              item={item}
-              shortfall={shortfall}
-              status={itemStatuses[item.id] || null}
-              onStatusChange={val => handleStatusChange(item.id, val)}
-            />
-          ))}
-        </div>
-      ))}
-      {untagged.length > 0 && (
-        <div className="shopping-section">
-          <div className="shopping-section-header">Untagged</div>
-          {untagged.map(({ item, shortfall }) => (
-            <ShoppingCard
-              key={item.id}
-              item={item}
-              shortfall={shortfall}
-              status={itemStatuses[item.id] || null}
-              onStatusChange={val => handleStatusChange(item.id, val)}
-            />
-          ))}
-        </div>
-      )}
+      {content}
     </div>
   )
 }
